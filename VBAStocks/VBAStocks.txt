@@ -1,0 +1,167 @@
+Sub Ticker()
+
+'Create Variable to loop through worksheets
+Dim WS As Worksheet
+
+    'Create loop to loop through all worksheets
+    For Each WS In ActiveWorkbook.Worksheets
+    WS.Activate
+
+        'Variable Declarations
+        Dim Ticker As String
+        Dim lastrow
+        Dim Ticker_Summary_Table_Row As Integer
+        Dim Opening_Price As Double
+        Dim Closing_Price As Double
+        Dim Yearly_Change As Double
+        Dim Percent_Change As Double
+        Dim Total_Stock_Volume As Double
+        Dim Greatest_Increase_Ticker As String
+        Dim Greatest_Increase_Value As Double
+        Dim Greatest_Decrease_Ticker As String
+        Dim Greatest_Decrease_Value As Double
+        Dim Greatest_Volume_Ticker As String
+        Dim Greatest_Volume_Value As Double
+        Dim lastrowsummary As Integer
+    
+        'Create variable to determine last row for dataset and summary table
+        lastrow = WS.Cells(Rows.Count, 1).End(xlUp).Row
+        lastrowsummary = WS.Cells(Rows.Count, 10).End(xlUp).Row
+    
+        'Create Variable to start summary table row at row 2
+        'Create Variable to set Total Stock Volume at zero to be accumulated
+        'Create Variable to set Opening Price
+        Ticker_Summary_Table_Row = 2
+        Total_Stock_Volume = 0
+        Opening_Price = Cells(2, 3).Value
+    
+        'Create Heading for Summary Table
+        Range("I1").Value = "Ticker"
+        Range("J1").Value = "Yearly Change"
+        Range("K1").Value = "Percent Change"
+        Range("L1").Value = "Total Stock Volume"
+        
+        'Create Heading for Greatest Calculations with formating
+        Range("O2").Value = "Greatest % Increase"
+        Columns("O:O").EntireColumn.AutoFit
+        Range("O3").Value = "Greatest % Decrease"
+        Range("O4").Value = "Greatest Total Volume"
+        Range("P1").Value = "Ticker"
+        Columns("P:P").EntireColumn.AutoFit
+        Range("Q1").Value = "Value"
+        Columns("Q:Q").EntireColumn.AutoFit
+    
+        'Create loop to grab information in dataset
+        For i = 2 To lastrow
+    
+        'Set Condition for what to do when there is a change in Ticker
+        If Cells(i + 1, 1).Value <> Cells(i, 1).Value Then
+        
+            'Set Ticker Name in Summary Table
+            Ticker = Cells(i, 1).Value
+            Range("I" & Ticker_Summary_Table_Row).Value = Ticker
+            Columns("I:I").EntireColumn.AutoFit
+            
+            'Set Closing Price for Ticker
+            Closing_Price = Cells(i, 6).Value
+            
+            'Calculate Yearly Change
+            Yearly_Change = Closing_Price - Opening_Price
+            Range("J" & Ticker_Summary_Table_Row).Value = Yearly_Change
+            Columns("J:J").EntireColumn.AutoFit
+            
+            'Conditions for what to do in case Opening Price or Closing Price equal zero
+            If (Opening_Price = 0 And Closing_Price = 0) Then
+                Percent_Change = 0
+            ElseIf (Opening_Price = 0 And Closing_Price <> 0) Then
+                Percent_Change = 1
+            Else
+            
+                'Calculate Percent Change
+                Percent_Change = Yearly_Change / Opening_Price
+                Range("K" & Ticker_Summary_Table_Row).Value = Percent_Change
+                Range("K" & Ticker_Summary_Table_Row).NumberFormat = "0.00%"
+                Columns("K:K").EntireColumn.AutoFit
+            
+            End If
+            
+            'Calculate Total Stock Volume
+            Total_Stock_Volume = Total_Stock_Volume + Cells(i, 7).Value
+            Range("L" & Ticker_Summary_Table_Row).Value = Total_Stock_Volume
+            Columns("L:L").EntireColumn.AutoFit
+            
+            'Add one row as Ticker Name changes
+            Ticker_Summary_Table_Row = Ticker_Summary_Table_Row + 1
+            
+            'Reset Total Stock Volume to zero when Ticker Name Changes
+            Total_Stock_Volume = 0
+            
+            'Reset Opening Price when Ticker Name Changes
+            Opening_Price = Cells(i + 1, 3).Value
+        
+        Else
+        
+            'Write Total Stock Volume in Summary Table
+            Total_Stock_Volume = Total_Stock_Volume + Cells(i, 7).Value
+            
+        End If
+        
+        Next i
+   
+        For j = 2 To lastrowsummary
+
+        'Set Condition for cell highlights
+        If Cells(j, 10).Value > 0 Then
+
+            'Color Cells Green if greater than zero
+            Cells(j, 10).Interior.ColorIndex = 4
+        
+        Else
+
+            'Color Cells Red if less than or equal to zero
+            Cells(j, 10).Interior.ColorIndex = 3
+            
+        End If
+    
+        Next j
+        
+        'Calculate Greatest Increase in Value
+        Greatest_Increase_Value = WorksheetFunction.Max(Range("K:K"))
+        Range("Q2").Value = Greatest_Increase_Value
+        Range("Q2").NumberFormat = "0.00%"
+    
+        'Calculate Greatest Decrease in Value
+        Greatest_Decrease_Value = WorksheetFunction.Min(Range("K:K"))
+        Range("Q3").Value = Greatest_Decrease_Value
+        Range("Q3").NumberFormat = "0.00%"
+    
+        'Calculate Greatest Volume
+        Greatest_Volume_Value = WorksheetFunction.Max(Range("L:L"))
+        Range("Q4").Value = Greatest_Volume_Value
+    
+        For k = 2 To lastrowsummary
+        
+        'Find Ticker Name for Greatest Increase and write in the summary
+        If Range("Q2").Value = Cells(k, 11).Value Then
+            Greatest_Increase_Ticker = Cells(k, 9).Value
+            Range("P2").Value = Greatest_Increase_Ticker
+        
+        ElseIf Range("Q3").Value = Cells(k, 11).Value Then
+            
+            'Find Ticker Name for Greatest Decrease and write in summary
+            Greatest_Decrease_Ticker = Cells(k, 9).Value
+            Range("P3").Value = Greatest_Decrease_Ticker
+            
+            ElseIf Range("Q4").Value = Cells(k, 12).Value Then
+            
+                'Find Ticker Name with Greatest Volume and write in summary
+                Greatest_Volume_Ticker = Cells(k, 9).Value
+                Range("P4").Value = Greatest_Volume_Ticker
+                
+        End If
+        
+        Next k
+   
+   Next WS
+   
+End Sub
